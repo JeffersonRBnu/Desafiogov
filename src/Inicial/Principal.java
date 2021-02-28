@@ -1,16 +1,23 @@
 package Inicial;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
+import classe.Arquivo;
+
 import classe.Cafe;
 import classe.Pessoa;
 import classe.SalaEvento;
 
 public class Principal {
 
+	static File fileEspacoCafe;
+	static File fileParticipantes;
+	static File fileSalasEventos;
 	
-
 	public static List<Pessoa> pessoas;
 	public static List<SalaEvento> eventos;
 	public static List<Cafe> cafes;
@@ -19,17 +26,71 @@ public class Principal {
 
 
 	public static void main(String[] args) {
-
+	
 		cafeInserido = -1;
 		salaInserido = -1;
 		pessoas = new ArrayList<Pessoa>();
 		eventos = new ArrayList<SalaEvento>();
 		cafes = new ArrayList<Cafe>();
 
+		carregaArquivos();
 		menu();
 
 	}
 
+	static void carregaArquivos() {
+		try {
+			fileEspacoCafe = Arquivo.AbrirArquivo("espacoCafe");
+			fileParticipantes = Arquivo.AbrirArquivo("participantes");
+			fileSalasEventos = Arquivo.AbrirArquivo("salasEvento");
+			
+			ArrayList<String> arqEspacoCafe = Arquivo.lerArquivo(fileEspacoCafe);
+			ArrayList<String> arqParticipantes = Arquivo.lerArquivo(fileParticipantes);
+			ArrayList<String> arqSalasEventos = Arquivo.lerArquivo(fileSalasEventos);
+			
+			if(!arqEspacoCafe.isEmpty()) {
+				for (String linha : arqEspacoCafe) {
+					String[] valores = linha.split(";");
+					
+					Cafe espacoCafe = new Cafe();
+					espacoCafe.setNome(valores[0]);
+					espacoCafe.setLotacao( Integer.parseInt(valores[1]) );
+					cafes.add(espacoCafe);
+					
+				}
+			}
+			
+			if(!arqSalasEventos.isEmpty()) {
+				for (String linha : arqSalasEventos) {
+					String[] valores = linha.split(";");
+					
+					SalaEvento salaEvento = new SalaEvento(); ;
+					salaEvento.setNome(valores[0]);
+					salaEvento.setLotacao(Integer.parseInt(valores[1]));					
+					eventos.add(salaEvento);
+					
+				}
+			}
+			
+			if(!arqParticipantes.isEmpty()) {
+				for (String linha : arqParticipantes) {
+					String[] valores = linha.split(";");
+					
+					Pessoa participante = new Pessoa(); 
+					participante.setNome(valores[0]);
+					participante.setSobrenome(valores[1]);
+					pessoas.add(participante);					
+				}
+			}
+			
+			if(!arqEspacoCafe.isEmpty() && !arqSalasEventos.isEmpty() && !arqParticipantes.isEmpty()) {
+				calculaLocal();
+			}
+			
+		} catch (Exception e) {
+			System.out.println("Nao foi possivel carregar os arquivos");
+		}
+	}
 	static void menu() {
 
 		String opcao; 
@@ -47,6 +108,7 @@ public class Principal {
 		
 		opcao = entrada.nextLine();
 
+		try {
 		switch (opcao) {
 
 			case "1":{
@@ -88,7 +150,10 @@ public class Principal {
 			}
 			
 		}
-	
+		}catch(Exception é) {
+			calculaLocal();
+			menu();
+		}
 	}
 		
 		static ArrayList<Pessoa> subLista(ArrayList<Pessoa> lista, int inicio, int fim) {
@@ -102,7 +167,7 @@ public class Principal {
 		return subList;
 	}
 	
-	static void cadastrarPessoa() {
+	static void cadastrarPessoa() throws IOException {
 		
 		Pessoa pessoa = new Pessoa();
 		Scanner entrada = new Scanner(System.in);
@@ -143,82 +208,12 @@ public class Principal {
 		pessoa.setSobrenome(entrada.nextLine());
 		
 		pessoas.add(pessoa);
-		eventos.get(salaInserido).inserirPessoaH1(pessoa);
-		
-		cafes.get(cafeInserido).inserirPessoaH1(pessoa);
-		
-		for(int i = 0; i < eventos.size(); i++ ) {
-			eventos.get(i).setParticipantesH2(new ArrayList<Pessoa>());
-		}
-		
-		for(int i = 0; i < eventos.size(); i++ ) {
-			
-			ArrayList<Pessoa> alocados = new ArrayList<Pessoa>();
-			ArrayList<Pessoa> realocados = new ArrayList<Pessoa>();
-			
-			if(eventos.get(i).getParticipantesH1().size() == 1) {
-				realocados.add(eventos.get(i).getParticipantesH1().get(0));
-			}else if(eventos.get(i).getParticipantesH1().size() > 1){
-				alocados = subLista(eventos.get(i).getParticipantesH1(),0, (int)Math.floor(eventos.get(i).getParticipantesH1().size()/2));
-				realocados = subLista(eventos.get(i).getParticipantesH1(),(int)Math.floor(eventos.get(i).getParticipantesH1().size()/2),eventos.get(i).getParticipantesH1().size());
-			}			
-			
-			if( i + 1 < eventos.size()) {
-				for(Pessoa p: alocados) {
-					eventos.get(i).inserirPessoaH2(p);
-				}
-				for(Pessoa p: realocados) {
-					eventos.get(i+1).inserirPessoaH2(p);
-				}
-			}else if(i + 1 == eventos.size()){
-				for(Pessoa p: alocados) {
-					eventos.get(i).inserirPessoaH2(p);
-				}
-				for(Pessoa p: realocados) {
-					eventos.get(0).inserirPessoaH2(p);
-				}
-			}
-			
-		}
-				
-		for(int i = 0; i < cafes.size(); i++ ) {
-			cafes.get(i).setParticipantesH2(new ArrayList<Pessoa>());
-		}
-		
-		for(int i = 0; i < cafes.size(); i++ ) {
-			
-			ArrayList<Pessoa> alocados = new ArrayList<Pessoa>();
-			ArrayList<Pessoa> realocados = new ArrayList<Pessoa>();
-			
-			if(cafes.get(i).getParticipantesH1().size() == 1) {
-				realocados.add(cafes.get(i).getParticipantesH1().get(0));
-			}else if(cafes.get(i).getParticipantesH1().size() > 1){
-				alocados = subLista(cafes.get(i).getParticipantesH1(),0, (int)Math.floor(cafes.get(i).getParticipantesH1().size()/2));
-				realocados = subLista(cafes.get(i).getParticipantesH1(),(int)Math.floor(cafes.get(i).getParticipantesH1().size()/2),cafes.get(i).getParticipantesH1().size());
-			}			
-			
-			if( i + 1 < cafes.size()) {
-				for(Pessoa p: alocados) {
-					cafes.get(i).inserirPessoaH2(p);
-				}
-				for(Pessoa p: realocados) {
-					cafes.get(i+1).inserirPessoaH2(p);
-				}
-			}else if(i + 1 == cafes.size()){
-				for(Pessoa p: alocados) {
-					cafes.get(i).inserirPessoaH2(p);
-				}
-				for(Pessoa p: realocados) {
-					cafes.get(0).inserirPessoaH2(p);
-				}
-			}
-			
-		}
-		
+		Arquivo.escreveNovaLinha(fileParticipantes, pessoa.getNome(),pessoa.getSobrenome());
+		calculaLocal();
 		menu();
 	
 	}
-	static void cadastrarSala() {
+	static void cadastrarSala() throws IOException {
 	
 		
 		
@@ -238,10 +233,11 @@ public class Principal {
 		evento.setLotacao(entrada.nextInt());
 		entrada.nextLine();
 		eventos.add(evento);
+		Arquivo.escreveNovaLinha(fileSalasEventos, evento.getNome(), String.valueOf(evento.getLotacao()));
 		menu();
 	
 	}
-	static void cadastrarCafe() {
+	static void cadastrarCafe() throws IOException {
 	
 		Scanner entrada = new Scanner(System.in);
 		Cafe cafe = new Cafe();
@@ -263,13 +259,17 @@ public class Principal {
 		System.out.println("cadastre a quantidade de  pessoas no espaço de café");
 		cafe.setLotacao(entrada.nextInt());
 		cafes.add(cafe);
-		
+		Arquivo.escreveNovaLinha(fileEspacoCafe, cafe.getNome(), String.valueOf(cafe.getLotacao()));
 		menu();
 	
 	}
 
 	static void consultaPessoas() {
 		Scanner entrada = new Scanner(System.in);
+		if(pessoas.size() == 0) {
+			System.out.println("Nenhuma participante cadastrado ainda!");
+			menu();
+		}
 		System.out.println("Digite o numero corespondente ao participante");
 		int contador = 0;
 		for (Pessoa participante: pessoas) {
@@ -336,9 +336,14 @@ public class Principal {
 	}
 
 	
-	static void consultarSala() {
+	static void consultarSala() throws Exception {
 		
 		int contador = 0;
+		
+		if(eventos.size() == 0) {
+			System.out.println("Nenhuma sala de evento cadastrada ainda!");
+			menu();
+		}
 		
 		System.out.println("digite o numero correspondente a sala de eventos para ver os participantes");
 		
@@ -365,16 +370,24 @@ public class Principal {
 		
 	}
 	
-	static void consultarPessoasSala (int numeroSala) {
+	static void consultarPessoasSala (int numeroSala) throws Exception {
 		SalaEvento salaAtual = eventos.get(numeroSala);
-		ArrayList <Pessoa> participantes = salaAtual.getParticipantesH1() ; 
+		ArrayList <Pessoa> participantesH1 = salaAtual.getParticipantesH1() ; 
+		ArrayList <Pessoa> participantesH2 = salaAtual.getParticipantesH2() ; 
 		
 		System.out.printf("participantes da sala %s %n",salaAtual.getNome());
+		System.out.println("Primeiro Horario");
 		
-		
-		for (Pessoa participante : participantes) {
+		for (Pessoa participante : participantesH1) {
 			System.out.printf("nome: %s sobrenome: %s %n",participante.getNome(),participante.getSobrenome() );
 		}
+		
+		System.out.println("Segundo Horario");
+		
+		for (Pessoa participante : participantesH2) {
+			System.out.printf("nome: %s sobrenome: %s %n",participante.getNome(),participante.getSobrenome() );
+		}
+		
 		
 		System.out.println("pressione [1] para voltar menu");
 		System.out.println("pressione [2] para voltar consultas de sala");
@@ -394,6 +407,11 @@ public class Principal {
 	static void consultarCafe() {
 		
 		int contador = 0;
+		if(cafes.size() == 0) {
+			System.out.println("Nenhuma espaco cafe cadastrado ainda!");
+			menu();
+		}
+
 		
 		System.out.println("digite o numero correspondente ao espaço cafe para ver os participantes");
 		
@@ -419,12 +437,23 @@ public class Principal {
 	}
 	
 	static void consultarPessoasCafe (int numeroSala) {
+		
+		if(pessoas.size() == 0) {
+			System.out.println("Nenhuma participante cadastrado ainda!");
+			menu();
+		}
+		
 		Cafe cafeAtual = cafes.get(numeroSala);
-		ArrayList <Pessoa> participantes = cafeAtual.getParticipantesH1() ; 
+		ArrayList <Pessoa> participantesH1 = cafeAtual.getParticipantesH1() ; 
+		ArrayList <Pessoa> participantesH2 = cafeAtual.getParticipantesH2() ; 
 		
 		System.out.println("participantes do cafe");
-		
-		for (Pessoa participante : participantes) {
+		System.out.println("Primeiro horario");
+		for (Pessoa participante : participantesH1) {
+			System.out.printf("nome: %s sobrenome: %s %n",participante.getNome(),participante.getSobrenome() );
+		}
+		System.out.println("Segundo horario");
+		for (Pessoa participante : participantesH2) {
 			System.out.printf("nome: %s sobrenome: %s %n",participante.getNome(),participante.getSobrenome() );
 		}
 		
@@ -442,4 +471,110 @@ public class Principal {
 		}
 		
 	}
+static void calculaLocal() {
+		
+		for(int i = 0; i < eventos.size(); i++) {
+			eventos.get(i).setParticipantesH1(new ArrayList<Pessoa>());
+			eventos.get(i).setParticipantesH2(new ArrayList<Pessoa>());
+		}
+		
+		for(int i = 0; i < cafes.size(); i++) {
+			cafes.get(i).setParticipantesH1(new ArrayList<Pessoa>());
+			cafes.get(i).setParticipantesH2(new ArrayList<Pessoa>());			
+		}
+		
+		salaInserido = -1;
+		cafeInserido = -1;
+		
+		
+		for(Pessoa participante: pessoas) {
+			
+			salaInserido = salaInserido +1;
+			if (salaInserido == eventos.size()) {
+				salaInserido = 0;
+			}
+			
+			cafeInserido = cafeInserido +1;
+			if (cafeInserido == cafes.size()) {
+				cafeInserido = 0;
+			}
+			
+			cafes.get(cafeInserido).inserirPessoaH1(participante);
+			eventos.get(salaInserido).inserirPessoaH1(participante);
+		}
+
+		
+
+		
+		for(int i = 0; i < eventos.size(); i++ ) {
+			eventos.get(i).setParticipantesH2(new ArrayList<Pessoa>());
+		}
+		
+		for(int i = 0; i < eventos.size(); i++ ) {
+			
+			ArrayList<Pessoa> alocados = new ArrayList<Pessoa>();
+			ArrayList<Pessoa> realocados = new ArrayList<Pessoa>();
+			
+			if(eventos.get(i).getParticipantesH1().size() == 1) {
+				realocados.add(eventos.get(i).getParticipantesH1().get(0));
+			}else if(eventos.get(i).getParticipantesH1().size() > 1){
+				alocados = subLista(eventos.get(i).getParticipantesH1(),0, (int)Math.floor(eventos.get(i).getParticipantesH1().size()/2));
+				realocados = subLista(eventos.get(i).getParticipantesH1(),(int)Math.floor(eventos.get(i).getParticipantesH1().size()/2),eventos.get(i).getParticipantesH1().size());
+			}			
+			
+			if( i + 1 < eventos.size()) {
+				for(Pessoa pessoa: alocados) {
+					eventos.get(i).inserirPessoaH2(pessoa);
+				}
+				for(Pessoa pessoa: realocados) {
+					eventos.get(i+1).inserirPessoaH2(pessoa);
+				}
+			}else if(i + 1 == eventos.size()){
+				for(Pessoa pessoa: alocados) {
+					eventos.get(i).inserirPessoaH2(pessoa);
+				}
+				for(Pessoa pessoa: realocados) {
+					eventos.get(0).inserirPessoaH2(pessoa);
+				}
+			}
+			
+		}
+				
+		for(int i = 0; i < cafes.size(); i++ ) {
+			cafes.get(i).setParticipantesH2(new ArrayList<Pessoa>());
+		}
+		
+		for(int i = 0; i < cafes.size(); i++ ) {
+			
+			ArrayList<Pessoa> alocados = new ArrayList<Pessoa>();
+			ArrayList<Pessoa> realocados = new ArrayList<Pessoa>();
+			
+			if(cafes.get(i).getParticipantesH1().size() == 1) {
+				realocados.add(cafes.get(i).getParticipantesH1().get(0));
+			}else if(cafes.get(i).getParticipantesH1().size() > 1){
+				alocados = subLista(cafes.get(i).getParticipantesH1(),0, (int)Math.floor(cafes.get(i).getParticipantesH1().size()/2));
+				realocados = subLista(cafes.get(i).getParticipantesH1(),(int)Math.floor(cafes.get(i).getParticipantesH1().size()/2),cafes.get(i).getParticipantesH1().size());
+			}			
+			
+			if( i + 1 < cafes.size()) {
+				for(Pessoa pessoa: alocados) {
+					cafes.get(i).inserirPessoaH2(pessoa);
+				}
+				for(Pessoa pessoa: realocados) {
+					cafes.get(i+1).inserirPessoaH2(pessoa);
+				}
+			}else if(i + 1 == cafes.size()){
+				for(Pessoa pessoa: alocados) {
+					cafes.get(i).inserirPessoaH2(pessoa);
+				}
+				for(Pessoa pessoa: realocados) {
+					cafes.get(0).inserirPessoaH2(pessoa);
+				}
+			}
+			
+		}
+		
+		
+	}
+
 }
